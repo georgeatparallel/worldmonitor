@@ -22,6 +22,7 @@ import {
   isLikelyProperNoun,
   toTermKey,
 } from '../../shared/keyword-spike-core.js';
+import { countPublisherFamilies } from '../../shared/publisher-families.js';
 import { t } from '@/services/i18n';
 
 export { extractEntities };
@@ -367,7 +368,9 @@ function checkForSpikes(now: number, config: TrendingConfig, blockedTerms: Set<s
     const recentHeadlines = dedupeHeadlines(
       record.headlines.filter(headline => now - headline.ingestedAt <= ROLLING_WINDOW_MS)
     );
-    const uniqueSources = new Set(recentHeadlines.map(headline => headline.source)).size;
+    // #6428: publishers, not feed labels — the client sibling of the same gate
+    // in shared/keyword-spike-core.js.
+    const uniqueSources = countPublisherFamilies(recentHeadlines.map(headline => headline.source));
     if (uniqueSources < MIN_SPIKE_SOURCE_COUNT) continue;
 
     record.lastSpikeAlertMs = now;
